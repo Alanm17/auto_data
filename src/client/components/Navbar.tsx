@@ -8,8 +8,6 @@ import {
   ShieldCheck,
   UserCheck,
   Eye,
-  Table as TableIcon,
-  LayoutGrid,
 } from "lucide-react";
 import { useAuth, PRESET_USERS } from "../context/AuthContext";
 import type { UserRole } from "../types";
@@ -23,8 +21,6 @@ interface NavbarProps {
   botCountdown: number;
   onOpenAuditLog: () => void;
   auditCount: number;
-  viewMode: "table" | "grid";
-  onToggleViewMode: (mode: "table" | "grid") => void;
 }
 
 export function Navbar({
@@ -35,8 +31,6 @@ export function Navbar({
   botCountdown,
   onOpenAuditLog,
   auditCount,
-  viewMode,
-  onToggleViewMode,
 }: NavbarProps) {
   const { currentUser, switchRole, canToggleBot } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -83,26 +77,6 @@ export function Navbar({
 
       {/* Right Actions */}
       <div className="header-right">
-        {/* View Mode Toggle (Table / Grid) */}
-        <div className="view-mode-toggle" title="Переключение вида: Таблица / Карточки">
-          <button
-            className={`view-toggle-btn ${viewMode === "table" ? "active" : ""}`}
-            onClick={() => onToggleViewMode("table")}
-            title="Табличный вид"
-          >
-            <TableIcon size={14} />
-            <span>Таблица</span>
-          </button>
-          <button
-            className={`view-toggle-btn ${viewMode === "grid" ? "active" : ""}`}
-            onClick={() => onToggleViewMode("grid")}
-            title="Вид карточек"
-          >
-            <LayoutGrid size={14} />
-            <span>Карточки</span>
-          </button>
-        </div>
-
         {/* Auto-pilot bot toggle */}
         <button
           className={`bot-toggle-btn ${isBotActive ? "active" : ""}`}
