@@ -1,7 +1,19 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Zap, Moon, Sun, History, ChevronDown, Check, ShieldCheck, UserCheck, Eye } from "lucide-react";
+import {
+  Moon,
+  Sun,
+  History,
+  ChevronDown,
+  Check,
+  ShieldCheck,
+  UserCheck,
+  Eye,
+  Table as TableIcon,
+  LayoutGrid,
+} from "lucide-react";
 import { useAuth, PRESET_USERS } from "../context/AuthContext";
 import type { UserRole } from "../types";
+import { SaleScoutLogo } from "./BrandIcons";
 
 interface NavbarProps {
   theme: "dark" | "light";
@@ -11,6 +23,8 @@ interface NavbarProps {
   botCountdown: number;
   onOpenAuditLog: () => void;
   auditCount: number;
+  viewMode: "table" | "grid";
+  onToggleViewMode: (mode: "table" | "grid") => void;
 }
 
 export function Navbar({
@@ -21,6 +35,8 @@ export function Navbar({
   botCountdown,
   onOpenAuditLog,
   auditCount,
+  viewMode,
+  onToggleViewMode,
 }: NavbarProps) {
   const { currentUser, switchRole, canToggleBot } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -45,12 +61,13 @@ export function Navbar({
     <header className="app-header">
       {/* Brand & System Status */}
       <div className="brand-section">
-        <div className="brand-icon-wrapper">
-          <Zap size={24} />
+        <div className="brand-icon-wrapper" style={{ padding: 0 }}>
+          <SaleScoutLogo size={42} />
         </div>
         <div>
           <div className="brand-title">
-            <span>SaleScout PriceBot</span>
+            <span style={{ fontWeight: 800 }}>SaleScout</span>
+            <span style={{ color: "var(--brand-kaspi)", fontWeight: 700 }}>PriceBot</span>
             <span className="brand-badge">Kaspi.kz Pro</span>
           </div>
           <div className="brand-subtitle">
@@ -64,8 +81,28 @@ export function Navbar({
         </div>
       </div>
 
-      {/* Right Actions: Auto-pilot, Audit Log, Theme, Role Switcher */}
+      {/* Right Actions */}
       <div className="header-right">
+        {/* View Mode Toggle (Table / Grid) */}
+        <div className="view-mode-toggle" title="Переключение вида: Таблица / Карточки">
+          <button
+            className={`view-toggle-btn ${viewMode === "table" ? "active" : ""}`}
+            onClick={() => onToggleViewMode("table")}
+            title="Табличный вид"
+          >
+            <TableIcon size={14} />
+            <span>Таблица</span>
+          </button>
+          <button
+            className={`view-toggle-btn ${viewMode === "grid" ? "active" : ""}`}
+            onClick={() => onToggleViewMode("grid")}
+            title="Вид карточек"
+          >
+            <LayoutGrid size={14} />
+            <span>Карточки</span>
+          </button>
+        </div>
+
         {/* Auto-pilot bot toggle */}
         <button
           className={`bot-toggle-btn ${isBotActive ? "active" : ""}`}
@@ -75,7 +112,7 @@ export function Navbar({
             canToggleBot
               ? isBotActive
                 ? "Остановить авто-пилот"
-                : "Включить автоматический пересчет цен"
+                : "Включить авто-пилот (пересчет каждые 15 сек)"
               : "Включение бота доступно только для роли Admin"
           }
         >
@@ -125,7 +162,7 @@ export function Navbar({
           <button
             className="user-profile-btn"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            title="Сменить роль или пользователя"
+            title="Сменить роль (Admin, Analyst, Auditor)"
           >
             <div className="user-avatar">
               {currentUser.role === "ADMIN" ? (

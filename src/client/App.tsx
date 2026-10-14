@@ -4,6 +4,7 @@ import { Navbar } from "./components/Navbar";
 import { StatsCards } from "./components/StatsCards";
 import { Toolbar } from "./components/Toolbar";
 import { PricingTable } from "./components/PricingTable";
+import { ProductCardGrid } from "./components/ProductCardGrid";
 import { ProductDetailDrawer } from "./components/ProductDetailDrawer";
 import { AddProductModal } from "./components/AddProductModal";
 import { AuditLogModal } from "./components/AuditLogModal";
@@ -11,20 +12,42 @@ import { JsonModal } from "./components/JsonModal";
 
 import type { Product, PriceResult } from "../types";
 import type { ProductRow, AuditLogEntry, SortConfig } from "./types";
+import { calculatePrice } from "../pricing";
 import initialProductsData from "../../data/products.json";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
+
+const STORAGE_KEY_PRODUCTS = "salescout_products_v2";
+const STORAGE_KEY_LOGS = "salescout_audit_logs";
+const STORAGE_KEY_VIEW = "salescout_view_mode";
 
 function MainDashboard() {
   const { currentUser, canReprice } = useAuth();
 
-  // State
-  const [products, setProducts] = useState<Product[]>(
-    initialProductsData as Product[]
-  );
+  // Load products from localStorage or fallback to initialProductsData
+  const [products, setProducts] = useState<Product[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_PRODUCTS);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to load products from localStorage", e);
+    }
+    return initialProductsData as Product[];
+  });
+
   const [results, setResults] = useState<PriceResult[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // View Mode: Table vs Grid Cards
+  const [viewMode, setViewMode] = useState<"table" | "grid">(() => {
+    return (localStorage.getItem(STORAGE_KEY_VIEW) as "table" | "grid") || "table";
+  });
 
   // Theme
   const [theme, setTheme] = useState<"dark" | "light">(() => {
@@ -35,7 +58,7 @@ function MainDashboard() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedReason, setSelectedReason] = useState<string>("ALL");
   const [sortConfig, setSortConfig] = useState<SortConfig>({
-    key: "sku",
+    key: "name",
     direction: "asc",
   });
 
@@ -44,7 +67,19 @@ function MainDashboard() {
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
   const [isJsonModalOpen, setIsJsonModalOpen] = useState<boolean>(false);
   const [isAuditModalOpen, setIsAuditModalOpen] = useState<boolean>(false);
-  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
+
+  // Audit Logs persisted in localStorage
+  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_LOGS);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {
+      console.warn("Failed to load audit logs", e);
+    }
+    return [];
+  });
 
   // Auto-pilot Kaspi Bot
   const [isBotActive, setIsBotActive] = useState<boolean>(false);
@@ -60,7 +95,35 @@ function MainDashboard() {
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));
   };
 
-  // Perform POST /reprice
+  const handleToggleViewMode = (mode: "table" | "grid") => {
+    setViewMode(mode);
+    localStorage.setItem(STORAGE_KEY_VIEW, mode);
+  };
+
+  // Save products to localStorage on change
+  const saveProductsToStorage = (updatedProducts: Product[]) => {
+    setProducts(updatedProducts);
+    try {
+      localStorage.setItem(STORAGE_KEY_PRODUCTS, JSON.stringify(updatedProducts));
+    } catch (e) {
+      console.warn("Failed to save products to localStorage", e);
+    }
+  };
+
+  // Save audit logs to localStorage
+  const saveAuditLogsToStorage = (updater: (prev: AuditLogEntry[]) => AuditLogEntry[]) => {
+    setAuditLogs((prev) => {
+      const next = updater(prev);
+      try {
+        localStorage.setItem(STORAGE_KEY_LOGS, JSON.stringify(next.slice(0, 100)));
+      } catch (e) {
+        console.warn("Failed to save audit logs", e);
+      }
+      return next;
+    });
+  };
+
+  // Perform POST /reprice (with transparent calculatePrice fallback if API unreachable)
   const executeReprice = useCallback(
     async (
       itemsToReprice: Product[],
@@ -70,23 +133,31 @@ function MainDashboard() {
       setApiError(null);
 
       try {
-        const response = await fetch("/reprice", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(itemsToReprice),
-        });
+        let data: PriceResult[];
 
-        if (!response.ok) {
-          const errData = await response.json().catch(() => ({}));
-          throw new Error(errData.error || `Ошибка сервера: HTTP ${response.status}`);
+        try {
+          const response = await fetch("/reprice", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(itemsToReprice),
+          });
+
+          if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.error || `HTTP ${response.status}`);
+          }
+          data = await response.json();
+        } catch (fetchErr: any) {
+          // If server is offline, fallback seamlessly to client-side calculatePrice
+          console.info("Using local calculatePrice fallback:", fetchErr.message);
+          data = itemsToReprice.map((p) => calculatePrice(p));
         }
 
-        const data: PriceResult[] = await response.json();
         setResults(data);
 
-        // Record audit logs for modified items
+        // Record audit logs
         const now = new Date().toLocaleTimeString("ru-KZ", {
           hour: "2-digit",
           minute: "2-digit",
@@ -111,11 +182,11 @@ function MainDashboard() {
           }
         });
 
-        setAuditLogs((prev) => [...newLogEntries, ...prev].slice(0, 100));
-        setSuccessMessage("Цены успешно пересчитаны через POST /reprice!");
-        setTimeout(() => setSuccessMessage(null), 3500);
+        saveAuditLogsToStorage((prev) => [...newLogEntries, ...prev]);
+        setSuccessMessage("Цены успешно пересчитаны и сохранены в браузере!");
+        setTimeout(() => setSuccessMessage(null), 3000);
       } catch (err: any) {
-        setApiError(err.message || "Не удалось связаться с сервером POST /reprice");
+        setApiError(err.message || "Ошибка пересчёта цен");
       } finally {
         setIsLoading(false);
       }
@@ -123,19 +194,18 @@ function MainDashboard() {
     [currentUser]
   );
 
-  // Initial load
+  // Initial calculation on mount
   useEffect(() => {
     executeReprice(products, "Система (Инициализация)");
   }, []);
 
-  // Auto-pilot interval worker
+  // Auto-pilot bot interval
   useEffect(() => {
     if (!isBotActive) return;
 
     const timer = setInterval(() => {
       setBotCountdown((prev) => {
         if (prev <= 1) {
-          // Trigger automated reprice with simulated competitor activity
           executeReprice(products, "🤖 Авто-пилот Kaspi Bot");
           return 15;
         }
@@ -176,7 +246,7 @@ function MainDashboard() {
     return { total, undercut, atMin, atMax, noCompetitors };
   }, [combinedRows]);
 
-  // Sorting handler
+  // Sorting
   const handleSort = (key: SortConfig["key"]) => {
     setSortConfig((prev) => ({
       key,
@@ -197,7 +267,6 @@ function MainDashboard() {
       return matchesSearch && matchesReason;
     });
 
-    // Sorting
     list.sort((a, b) => {
       let valA: any;
       let valB: any;
@@ -283,40 +352,42 @@ function MainDashboard() {
     document.body.removeChild(link);
   };
 
-  // Actions
+  // Actions with LocalStorage persistence
   const handleSaveProduct = (updated: Product) => {
     const nextList = products.map((p) => (p.sku === updated.sku ? updated : p));
-    setProducts(nextList);
+    saveProductsToStorage(nextList);
     executeReprice(nextList, `${currentUser.name} (Редактирование товара)`);
   };
 
   const handleAddProduct = (newProd: Product) => {
     const nextList = [newProd, ...products];
-    setProducts(nextList);
+    saveProductsToStorage(nextList);
     executeReprice(nextList, `${currentUser.name} (Добавлен новый товар)`);
   };
 
   const handleDeleteProduct = (sku: string) => {
     if (confirm(`Удалить товар ${sku} из мониторинга?`)) {
       const nextList = products.filter((p) => p.sku !== sku);
-      setProducts(nextList);
+      saveProductsToStorage(nextList);
       executeReprice(nextList, `${currentUser.name} (Удаление товара)`);
     }
   };
 
   const handleResetToDemo = () => {
-    setProducts(initialProductsData as Product[]);
-    executeReprice(initialProductsData as Product[], "Сброс к эталонным данным");
+    localStorage.removeItem(STORAGE_KEY_PRODUCTS);
+    const defaultData = initialProductsData as Product[];
+    saveProductsToStorage(defaultData);
+    executeReprice(defaultData, "Сброс к эталонным 6 товарам");
   };
 
   const handleApplyJson = (newProducts: Product[]) => {
-    setProducts(newProducts);
+    saveProductsToStorage(newProducts);
     executeReprice(newProducts, `${currentUser.name} (Импорт JSON)`);
   };
 
   return (
     <div className="app-container">
-      {/* Navbar */}
+      {/* Header with Master Logo, View Mode Toggle, Auto-pilot & RBAC */}
       <Navbar
         theme={theme}
         onToggleTheme={toggleTheme}
@@ -325,6 +396,8 @@ function MainDashboard() {
         botCountdown={botCountdown}
         onOpenAuditLog={() => setIsAuditModalOpen(true)}
         auditCount={auditLogs.length}
+        viewMode={viewMode}
+        onToggleViewMode={handleToggleViewMode}
       />
 
       {/* Notifications */}
@@ -353,10 +426,10 @@ function MainDashboard() {
         </div>
       )}
 
-      {/* KPI Stats Bar */}
+      {/* KPI Stats Bar with Segmented Catalog Distribution */}
       <StatsCards rows={combinedRows} />
 
-      {/* Toolbar */}
+      {/* Toolbar with Search, Filter Chips, Add Product, JSON, CSV */}
       <Toolbar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
@@ -371,14 +444,22 @@ function MainDashboard() {
         onExportCsv={handleExportCsv}
       />
 
-      {/* Pricing Table (Было / Стало) */}
-      <PricingTable
-        rows={processedRows}
-        sortConfig={sortConfig}
-        onSort={handleSort}
-        onInspect={(p) => setInspectingProduct(p)}
-        onDeleteProduct={handleDeleteProduct}
-      />
+      {/* Main Content: 5-Column Table OR Grid Cards View */}
+      {viewMode === "table" ? (
+        <PricingTable
+          rows={processedRows}
+          sortConfig={sortConfig}
+          onSort={handleSort}
+          onInspect={(p) => setInspectingProduct(p)}
+          onDeleteProduct={handleDeleteProduct}
+        />
+      ) : (
+        <ProductCardGrid
+          rows={processedRows}
+          onInspect={(p) => setInspectingProduct(p)}
+          onDeleteProduct={handleDeleteProduct}
+        />
+      )}
 
       {/* Product Detail / What-If Simulator Drawer */}
       <ProductDetailDrawer
@@ -407,7 +488,10 @@ function MainDashboard() {
         isOpen={isAuditModalOpen}
         onClose={() => setIsAuditModalOpen(false)}
         logs={auditLogs}
-        onClearLogs={() => setAuditLogs([])}
+        onClearLogs={() => {
+          setAuditLogs([]);
+          localStorage.removeItem(STORAGE_KEY_LOGS);
+        }}
       />
     </div>
   );
