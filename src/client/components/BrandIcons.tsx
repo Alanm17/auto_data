@@ -9,89 +9,83 @@ export function AppleLogo({ size = 20, className = "" }: { size?: number; classN
   );
 }
 
-// Логотип Samsung (Authentic Brand Badge)
+// Логотип Samsung (Authentic Brand Orbit & Monogram)
 export function SamsungLogo({ size = 20, className = "" }: { size?: number; className?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 28 28" fill="none" className={className}>
-      <rect width="28" height="28" rx="7" fill="#0C238A" />
-      <text
-        x="50%"
-        y="56%"
-        dominantBaseline="middle"
-        textAnchor="middle"
-        fill="white"
-        fontFamily="sans-serif"
-        fontWeight="800"
-        fontSize="8.5"
-        letterSpacing="0.05em"
-      >
-        SAMSUNG
-      </text>
-    </svg>
-  );
-}
-
-// Логотип Xiaomi (Authentic Mi Badge)
-export function XiaomiLogo({ size = 20, className = "" }: { size?: number; className?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 28 28" fill="none" className={className}>
-      <rect width="28" height="28" rx="8" fill="#FF6900" />
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+      {/* Iconic Samsung tilted ellipse orbit */}
+      <ellipse
+        cx="12"
+        cy="12"
+        rx="10"
+        ry="6.4"
+        transform="rotate(-16 12 12)"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+      />
+      {/* Sharp stylized geometric Samsung S */}
       <path
-        d="M8.5 9h3v6.5h2.5V9h3v10h-3v-4.5h-2.5V19h-3V9z"
-        fill="white"
+        d="M14.6 9.1c-.4-.9-1.3-1.5-2.6-1.5-1.5 0-2.5.8-2.5 2 0 1.2 1 1.7 2.3 2.1 1.6.4 2.8.9 2.8 2.5 0 1.6-1.4 2.6-3 2.6-1.7 0-2.8-.9-3.2-2.2l1.6-.6c.2.8.8 1.3 1.6 1.3.9 0 1.5-.5 1.5-1.2 0-.9-.8-1.3-2.3-1.8-1.6-.4-2.8-1-2.8-2.5 0-1.6 1.3-2.6 2.8-2.6 1.4 0 2.4.7 2.8 1.8l-1.5.7z"
+        fill="currentColor"
       />
     </svg>
   );
 }
 
-// Логотип Dyson (Premium Fuchsia Dyson Badge)
-export function DysonLogo({ size = 20, className = "" }: { size?: number; className?: string }) {
+// Логотип Xiaomi (Authentic Kenya Hara Squircle & Mi Monogram)
+export function XiaomiLogo({ size = 20, className = "" }: { size?: number; className?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 28 28" fill="none" className={className}>
-      <rect width="28" height="28" rx="7" fill="#E11D48" />
-      <text
-        x="50%"
-        y="56%"
-        dominantBaseline="middle"
-        textAnchor="middle"
-        fill="white"
-        fontFamily="sans-serif"
-        fontWeight="800"
-        fontSize="10"
-        letterSpacing="-0.02em"
-      >
-        dyson
-      </text>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+      {/* Xiaomi squircle contour */}
+      <rect x="2.5" y="2.5" width="19" height="19" rx="5.5" stroke="currentColor" strokeWidth="1.8" />
+      {/* Signature Xiaomi Mi monogram */}
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M6 7.5h8.2c1.2 0 2.1.9 2.1 2.1v6.9h-1.9v-6.2c0-.4-.3-.7-.7-.7h-1.2v6.9h-1.9v-5.4h-1v5.4H6V7.5zm11.2 0H19v9h-1.8V7.5z"
+        fill="currentColor"
+      />
     </svg>
   );
 }
 
-// Логотип JBL (Authentic JBL Orange Badge)
+// Логотип Dyson (Aerodynamic Ring & Geometric "d" Monogram)
+export function DysonLogo({ size = 20, className = "" }: { size?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+      {/* Dyson aerodynamic guide */}
+      <circle cx="12" cy="12" r="9.5" stroke="currentColor" strokeWidth="1.75" opacity="0.4" />
+      {/* Iconic Dyson geometric lower-case "d" mark */}
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M14.5 5h2v11.5c0 1.1-.9 2-2 2-.4 0-.7-.1-.9-.2l.2-1.6c.2 0 .3.1.5.1.4 0 .6-.2.6-.5v-1.6c-.7.9-1.8 1.4-2.9 1.4-2.3 0-4-1.8-4-4.1s1.7-4.1 4-4.1c1.1 0 2.2.5 2.9 1.4V5zm-.2 7.2c0-1.3-1-2.4-2.3-2.4s-2.3 1.1-2.3 2.4 1 2.4 2.3 2.4 2.3-1.1 2.3-2.4z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+// Логотип JBL (Acoustic Speaker Frame & Bold Geometric Lettermark)
 export function JblLogo({ size = 20, className = "" }: { size?: number; className?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 28 28" fill="none" className={className}>
-      <rect width="28" height="28" rx="7" fill="#EA580C" />
-      <text
-        x="50%"
-        y="56%"
-        dominantBaseline="middle"
-        textAnchor="middle"
-        fill="white"
-        fontFamily="sans-serif"
-        fontWeight="900"
-        fontSize="11"
-        letterSpacing="0.02em"
-      >
-        JBL
-      </text>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+      {/* JBL acoustic speaker enclosure */}
+      <rect x="2.5" y="2.5" width="19" height="19" rx="5.5" stroke="currentColor" strokeWidth="1.75" opacity="0.4" />
+      {/* Bold JBL geometric lettermark */}
+      <path
+        d="M5.5 8.5h1.9v4.2c0 .8-.5 1.3-1.3 1.3h-.6V12.6h.2c.2 0 .3-.1.3-.3V8.5zm2.8 0h3c.9 0 1.5.5 1.5 1.3 0 .5-.3.9-.8 1.1.6.2.9.7.9 1.3 0 .9-.7 1.5-1.7 1.5H8.3V8.5zm1.6 1.9h1.1c.2 0 .3-.1.3-.3s-.1-.3-.3-.3H9.9v.6zm0 1.9h1.2c.2 0 .4-.1.4-.4s-.2-.4-.4-.4H9.9v.8zm4.6-3.8h1.6v4.1H18.5V13.7H14.5V8.5z"
+        fill="currentColor"
+      />
     </svg>
   );
 }
 
 // Логотип SaleScout Pro (Master Brand)
-export function SaleScoutLogo({ size = 32 }: { size?: number }) {
+export function SaleScoutLogo({ size = 32, className = "" }: { size?: number; className?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 36 36" fill="none">
+    <svg width={size} height={size} viewBox="0 0 36 36" fill="none" className={className}>
       <defs>
         <linearGradient id="scoutGradient" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
           <stop stopColor="#FF4B3A" />
