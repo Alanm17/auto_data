@@ -9,6 +9,7 @@ import {
   ArrowUpRight,
   UserX,
   ArrowRight,
+  type LucideIcon,
 } from "lucide-react";
 import type { ProductRow, Reason } from "../types";
 import { useAuth } from "../context/AuthContext";
@@ -22,7 +23,7 @@ interface ProductCardGridProps {
 
 const REASON_CONFIG: Record<
   Reason,
-  { label: string; explanation: string; icon: any; className: string }
+  { label: string; explanation: string; icon: LucideIcon; className: string }
 > = {
   UNDERCUT: {
     label: "Победа в Buy Box",
@@ -106,7 +107,7 @@ export function ProductCardGrid({
           );
         }
 
-        const inStockCompetitors = row.competitors.filter((c: any) => c.inStock);
+        const inStockCompetitors = row.competitors.filter((c) => c.inStock);
 
         return (
           <div
@@ -261,7 +262,7 @@ export function ProductCardGrid({
                     Нет конкурентов (монополия)
                   </span>
                 ) : (
-                  row.competitors.slice(0, 3).map((c: any, i: number) => (
+                  row.competitors.slice(0, 3).map((c, i) => (
                     <span
                       key={i}
                       className={`competitor-mini-chip ${!c.inStock ? "oos" : ""}`}

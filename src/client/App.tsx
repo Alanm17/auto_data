@@ -134,6 +134,7 @@ function MainDashboard() {
 
       try {
         let data: PriceResult[];
+        let usedFallback = false;
 
         try {
           const response = await fetch("/reprice", {
@@ -149,9 +150,13 @@ function MainDashboard() {
             throw new Error(errData.error || `HTTP ${response.status}`);
           }
           data = await response.json();
-        } catch (fetchErr: any) {
-          // If server is offline, fallback seamlessly to client-side calculatePrice
-          console.info("Using local calculatePrice fallback:", fetchErr.message);
+        } catch (fetchErr) {
+          // Сервер недоступен — считаем локально, но явно сообщаем об этом пользователю
+          const reason = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
+          usedFallback = true;
+          setApiError(
+            `POST /reprice недоступен (${reason}). Показан локальный расчёт — запустите сервер: npm run dev`
+          );
           data = itemsToReprice.map((p) => calculatePrice(p));
         }
 
@@ -183,10 +188,12 @@ function MainDashboard() {
         });
 
         saveAuditLogsToStorage((prev) => [...newLogEntries, ...prev]);
-        setSuccessMessage("Цены успешно пересчитаны и сохранены в браузере!");
-        setTimeout(() => setSuccessMessage(null), 3000);
-      } catch (err: any) {
-        setApiError(err.message || "Ошибка пересчёта цен");
+        if (!usedFallback) {
+          setSuccessMessage("Цены пересчитаны через POST /reprice");
+          setTimeout(() => setSuccessMessage(null), 3000);
+        }
+      } catch (err) {
+        setApiError(err instanceof Error ? err.message : "Ошибка пересчёта цен");
       } finally {
         setIsLoading(false);
       }
@@ -268,8 +275,8 @@ function MainDashboard() {
     });
 
     list.sort((a, b) => {
-      let valA: any;
-      let valB: any;
+      let valA: string | number = "";
+      let valB: string | number = "";
 
       if (sortConfig.key === "sku") {
         valA = a.sku;
@@ -320,7 +327,7 @@ function MainDashboard() {
       const oldP = r.result ? r.result.oldPrice : r.myPrice;
       const newP = r.result ? r.result.newPrice : "";
       const delta = r.result ? r.result.newPrice - r.result.oldPrice : "";
-      const inStock = r.competitors.filter((c: any) => c.inStock).length;
+      const inStock = r.competitors.filter((c) => c.inStock).length;
 
       return [
         `"${r.sku}"`,
@@ -396,8 +403,6 @@ function MainDashboard() {
         botCountdown={botCountdown}
         onOpenAuditLog={() => setIsAuditModalOpen(true)}
         auditCount={auditLogs.length}
-        viewMode={viewMode}
-        onToggleViewMode={handleToggleViewMode}
       />
 
       {/* Notifications */}
@@ -442,6 +447,8 @@ function MainDashboard() {
         onOpenJsonModal={() => setIsJsonModalOpen(true)}
         onResetToDemo={handleResetToDemo}
         onExportCsv={handleExportCsv}
+        viewMode={viewMode}
+        onChangeViewMode={handleToggleViewMode}
       />
 
       {/* Main Content: 5-Column Table OR Grid Cards View */}

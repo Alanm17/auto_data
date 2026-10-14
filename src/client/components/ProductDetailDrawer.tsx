@@ -53,13 +53,12 @@ export function ProductDetailDrawer({
     setLiveResult(calculatePrice(next));
   };
 
-  const handleFieldChange = (field: keyof Product, value: any) => {
+  type NumericField = "minPrice" | "maxPrice" | "step" | "myPrice";
+
+  const handleFieldChange = (field: NumericField, value: string) => {
     const num = Number(value);
-    const updated = {
-      ...formData,
-      [field]: isNaN(num) ? value : num,
-    };
-    updateProductState(updated);
+    if (Number.isNaN(num)) return;
+    updateProductState({ ...formData, [field]: num });
   };
 
   const handleToggleCompetitorStock = (index: number) => {

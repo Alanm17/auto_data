@@ -42,8 +42,8 @@ export function JsonModal({
       }
       onApply(parsed);
       onClose();
-    } catch (e: any) {
-      setErrorMsg("Ошибка JSON: " + e.message);
+    } catch (e) {
+      setErrorMsg("Ошибка JSON: " + (e instanceof Error ? e.message : String(e)));
     }
   };
 

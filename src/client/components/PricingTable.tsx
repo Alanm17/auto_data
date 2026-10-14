@@ -13,6 +13,7 @@ import {
   UserX,
   ChevronDown,
   ChevronUp,
+  type LucideIcon,
 } from "lucide-react";
 import type { ProductRow, SortConfig, Reason } from "../types";
 import { useAuth } from "../context/AuthContext";
@@ -28,7 +29,7 @@ interface PricingTableProps {
 
 const REASON_CONFIG: Record<
   Reason,
-  { label: string; explanation: string; icon: any; className: string }
+  { label: string; explanation: string; icon: LucideIcon; className: string }
 > = {
   UNDERCUT: {
     label: "UNDERCUT",
@@ -158,7 +159,7 @@ export function PricingTable({
               }
 
               const isExpanded = !!expandedRows[row.sku];
-              const inStockCompetitors = row.competitors.filter((c: any) => c.inStock);
+              const inStockCompetitors = row.competitors.filter((c) => c.inStock);
 
               return (
                 <React.Fragment key={row.sku}>
@@ -343,7 +344,7 @@ export function PricingTable({
                             </div>
                           ) : (
                             <div className="competitors-grid">
-                              {row.competitors.map((c: any, idx: number) => {
+                              {row.competitors.map((c, idx) => {
                                 const diffWithNew = newPrice !== null ? c.price - newPrice : 0;
                                 return (
                                   <div

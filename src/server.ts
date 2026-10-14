@@ -1,4 +1,4 @@
-import express, { type Request, type Response } from "express";
+import express, { type Request, type Response, type ErrorRequestHandler } from "express";
 import cors from "cors";
 import path from "node:path";
 import fs from "node:fs";
@@ -15,13 +15,15 @@ export function createApp() {
   app.use(cors());
   app.use(express.json({ limit: "10mb" }));
 
-  // Обработчик синтаксических ошибок JSON
-  app.use((err: any, _req: Request, res: Response, next: any) => {
-    if (err && "status" in err && err.status === 400) {
-      return res.status(400).json({ error: "Invalid JSON payload" });
+  // Обработчик синтаксических ошибок JSON → 400
+  const jsonErrorHandler: ErrorRequestHandler = (err, _req, res, next) => {
+    if (err instanceof SyntaxError && "status" in err && err.status === 400) {
+      res.status(400).json({ error: "Invalid JSON payload" });
+      return;
     }
     next(err);
-  });
+  };
+  app.use(jsonErrorHandler);
 
   // Health check
   app.get("/health", (_req: Request, res: Response) => {
